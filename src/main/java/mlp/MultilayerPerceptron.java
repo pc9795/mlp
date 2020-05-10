@@ -40,9 +40,11 @@ public class MultilayerPerceptron {
     //Weight changes going to be applied to upper layer
     private double dw2[][];
     //Activations of the lower layer
-    private double z1[][];
+    private double z1[];
     //Activations of the upper layer
-    private double z2[][];
+    private double z2[];
+    //Contains value of input units
+    private double input[];
     //Contains value of hidden units
     private double h[];
     //Contains value of the outputs
@@ -59,7 +61,9 @@ public class MultilayerPerceptron {
         this.epochs = DEFAULT_EPOCHS;
         this.learningRate = DEFAULT_LEARNING_STATE;
         this.h = new double[nh];
+        this.z1 = new double[nh];
         this.o = new double[no];
+        this.z2 = new double[no];
         this.w1 = new double[ni][nh];
         //All values will be zero by default
         this.dw1 = new double[ni][nh];
@@ -93,12 +97,14 @@ public class MultilayerPerceptron {
             throw new MLPException(String.format("Expected no of units in input: %s but found %s",
                     this.ni, input.length));
         }
+        System.arraycopy(input, 0, this.input, 0, ni);
         //Activate hidden layer
         for (int i = 0; i < this.nh; i++) {
             double sum = 0;
             for (int j = 0; j < this.ni; j++) {
-                sum += input[j] * this.w1[j][i];
+                sum += this.input[j] * this.w1[j][i];
             }
+            this.z1[i] = sum;
             this.h[i] = this.activation.apply(sum);
         }
         //Activate output layer
@@ -107,20 +113,41 @@ public class MultilayerPerceptron {
             for (int j = 0; j < this.nh; j++) {
                 sum += this.h[j] * this.w2[j][i];
             }
+            this.z2[i] = sum;
             this.o[i] = this.activation.apply(sum);
         }
     }
 
-    private double backward(double[] target) {
+    private void backward(double[] target) {
         if (target.length != this.no) {
             throw new MLPException(String.format("Expected no of units in target: %s but found %s",
                     this.no, target.length));
         }
-        double[] error = new double[this.no];
+        //Delta for upper layer
+        double[] delta2 = new double[this.no];
         for (int i = 0; i < this.no; i++) {
-            error[i] = target[i] - this.o[i];
+            delta2[i] = (target[i] - this.o[i]) * this.activation.applyDerivative(this.o[i]);
         }
-        return -1;
+        //Weight difference for upper layer
+        for (int i = 0; i < this.nh; i++) {
+            for (int j = 0; j < this.no; j++) {
+                this.dw2[i][j] = this.h[i] * delta2[j];
+            }
+        }
+        //Delta for lower layer
+        double[] delta1 = new double[this.nh];
+        for (int i = 0; i < this.nh; i++) {
+            for (int j = 0; j < this.no; j++) {
+                delta1[i] += this.h[i] * delta2[j];
+            }
+            delta1[i] *= this.activation.applyDerivative(this.h[i]);
+        }
+        //Weight difference for lower layer
+        for (int i = 0; i < this.ni; i++) {
+            for (int j = 0; j < this.nh; j++) {
+                this.dw1[i][j] = this.input[i] * delta1[j];
+            }
+        }
     }
 
     private void updateWeights() {
@@ -146,7 +173,8 @@ public class MultilayerPerceptron {
             double error = 0;
             for (int i = 0; i < x.length; i++) {
                 this.forward(x[i]);
-                error += this.backward(y[i]);
+                error += this.lossFunction.calculate(this.o, y[i]);
+                this.backward(y[i]);
                 updateWeights();
             }
             System.out.println(String.format("Error at epoch: %s is %s", epoch, error));
