@@ -6,5 +6,5 @@ package mlp.activations;
  * Purpose: TODO:
  **/
 public enum ActivationType {
-    TANH, SIGMOID, LINEAR
+    TANH, SIGMOID, LINEAR, RELU
 }

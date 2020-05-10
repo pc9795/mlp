@@ -7,5 +7,7 @@ package mlp.activations;
  **/
 public interface Activation {
 
-    double activate(double input);
+    double apply(double input);
+
+    double applyDerivative(double input);
 }

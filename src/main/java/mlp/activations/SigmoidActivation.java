@@ -6,7 +6,11 @@ package mlp.activations;
  * Purpose: TODO:
  **/
 public class SigmoidActivation implements Activation {
-    public double activate(double input) {
-        return 1 / (1 + Math.exp(-input));
+    public double apply(double input) {
+        return 1.0 / (1.0 + Math.exp(-input));
+    }
+
+    public double applyDerivative(double input) {
+        throw new RuntimeException("Not implemented");
     }
 }

@@ -10,13 +10,12 @@ import mlp.exceptions.MLPException;
 public class SquaredErrorLoss implements Loss {
     public double calculate(double[] output, double[] target) {
         if (output.length != target.length) {
-            throw new MLPException(String.format("The length of ouput and target vector is different. %s != %s", output.length, target.length));
+            throw new MLPException(String.format("The length of output and target vector is different. %s != %s", output.length, target.length));
         }
         double loss = 0;
         for (int i = 0; i < output.length; i++) {
-            loss += Math.pow(target[i] - output[i], 2);
+            loss += 0.5 * Math.pow(target[i] - output[i], 2);
         }
-        loss = Math.sqrt(loss);
         return loss;
     }
 }

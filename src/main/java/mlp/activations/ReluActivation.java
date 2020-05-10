@@ -2,15 +2,15 @@ package mlp.activations;
 
 /**
  * Created By: Prashant Chaubey
- * Created On: 09-05-2020 02:21
+ * Created On: 09-05-2020 21:13
  * Purpose: TODO:
  **/
-public class TanhActivation implements Activation {
+public class ReluActivation implements Activation {
     public double apply(double input) {
-        return Math.tanh(input);
+        return Math.max(0, input);
     }
 
     public double applyDerivative(double input) {
-        return 1 - Math.pow(Math.tanh(input), 2);
+        throw new RuntimeException("Not implemented");
     }
 }

@@ -6,7 +6,11 @@ package mlp.activations;
  * Purpose: TODO:
  **/
 public class LinearActivation implements Activation {
-    public double activate(double input) {
+    public double apply(double input) {
         return input;
+    }
+
+    public double applyDerivative(double input) {
+        throw new RuntimeException("Not implemented");
     }
 }
