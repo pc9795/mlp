@@ -11,6 +11,6 @@ public class LinearActivationFn implements ActivationFn {
     }
 
     public double squashDerivative(double input) {
-        throw new RuntimeException("Not implemented");
+        return 1;
     }
 }

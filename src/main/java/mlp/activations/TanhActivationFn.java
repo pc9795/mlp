@@ -11,6 +11,6 @@ public class TanhActivationFn implements ActivationFn {
     }
 
     public double squashDerivative(double input) {
-        return 1 - Math.pow(Math.tanh(input), 2);
+        return 1 - Math.pow(this.squash(input), 2);
     }
 }

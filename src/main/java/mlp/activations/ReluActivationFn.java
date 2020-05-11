@@ -11,6 +11,6 @@ public class ReluActivationFn implements ActivationFn {
     }
 
     public double squashDerivative(double input) {
-        throw new RuntimeException("Not implemented");
+        return input <= 0 ? 0 : 1;
     }
 }
