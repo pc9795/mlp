@@ -6,11 +6,11 @@ package mlp.activations;
  * Purpose: TODO:
  **/
 public class TanhActivation implements Activation {
-    public double apply(double input) {
+    public double squash(double input) {
         return Math.tanh(input);
     }
 
-    public double applyDerivative(double input) {
+    public double squashDerivative(double input) {
         return 1 - Math.pow(Math.tanh(input), 2);
     }
 }

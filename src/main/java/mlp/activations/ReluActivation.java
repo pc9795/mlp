@@ -6,11 +6,11 @@ package mlp.activations;
  * Purpose: TODO:
  **/
 public class ReluActivation implements Activation {
-    public double apply(double input) {
+    public double squash(double input) {
         return Math.max(0, input);
     }
 
-    public double applyDerivative(double input) {
+    public double squashDerivative(double input) {
         throw new RuntimeException("Not implemented");
     }
 }
