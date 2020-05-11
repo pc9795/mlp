@@ -12,6 +12,27 @@ import java.util.Arrays;
 public class Utils {
 
     /**
+     * Calculate a score based on number of correct predictions
+     *
+     * @param predicted predicted output
+     * @param target    actual output
+     * @return ration of correct predictions to total predictions
+     */
+    public static double accuracyScore(double predicted[][], double target[][]) {
+        if (target.length != predicted.length) {
+            throw new MLPException(String.format("The length of target and predicted is not same: %s != %s",
+                    target.length, predicted.length));
+        }
+        //Check how many predicted values match with output
+        double correct = 0;
+        for (int i = 0; i < target.length; i++) {
+            correct += Arrays.equals(target[i], predicted[i]) ? 1 : 0;
+        }
+        //Return the ration of the correctly predicted to total number of predictions
+        return correct / target.length;
+    }
+
+    /**
      * Class to contains information about training and testing data
      */
     public static class TrainTestSplit {

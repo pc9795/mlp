@@ -2,10 +2,11 @@ package mlp;
 
 import mlp.activations.*;
 import mlp.exceptions.MLPException;
+import mlp.loss_functions.BinaryCrossEntropyLossFn;
+import mlp.loss_functions.CrossEntropyLossFn;
 import mlp.loss_functions.LossFn;
 import mlp.loss_functions.SquaredErrorLossFn;
 
-import java.util.Arrays;
 import java.util.Random;
 
 /**
@@ -24,8 +25,9 @@ public class MultilayerPerceptron {
     private int ni; //Number of input units
     private int nh; //Number of hidden layer units
     private int no; //Number of output units
-    private ActivationFn activationFn; //Activation function used in hidden and output layers
-    private LossFn lossFnFunction; // Function to calculate loss between actual output and output of the mlp
+    private ActivationFn hiddenActivationFn; //Activation function used in hidden layers
+    private ActivationFn outputActivationFn; //Activation function used in output layers
+    private LossFn lossFn; // Function to calculate loss between actual output and output of the mlp
     private int epochs; //Epoch to train the mlp
     private double learningRate; //Learning rate for the weight updates
     private double w1[][]; //Weights of the lower layer
@@ -38,24 +40,33 @@ public class MultilayerPerceptron {
     private double h[]; //Contains value of hidden units
     private double o[]; //Contains value of the outputs
     private int randomState; //Random state to control the outcomes of mlp
+    private double threshold = 0.5; //Threshold for classification problems
+    private boolean classification; //true if this mlp is solving a classification problem
+    private boolean multiClass; //true if this mlp is solving a multi-class classification problem
 
-
-    public MultilayerPerceptron(int ni, int nh, int no, int randomState) {
-        this(ni, nh, no, randomState, DEFAULT_LEARNING_STATE, DEFAULT_EPOCHS, ActivationType.SIGMOID);
-    }
-
-    public MultilayerPerceptron(int ni, int nh, int no, int randomState, double learningRate, int epochs) {
-        this(ni, nh, no, randomState, learningRate, epochs, ActivationType.SIGMOID);
-    }
 
     public MultilayerPerceptron(int ni, int nh, int no, int randomState, double learningRate, int epochs,
-                                ActivationType type) {
+                                ActivationType type, boolean classification, boolean multiClass) {
         this.ni = ni;
         this.nh = nh;
         this.no = no;
         this.randomState = randomState;
-        this.activationFn = this.getActivation(type);
-        this.lossFnFunction = new SquaredErrorLossFn();
+        this.hiddenActivationFn = this.getActivation(type);
+        if (!classification) {
+            //Regression
+            this.outputActivationFn = new LinearActivationFn();
+            this.lossFn = new SquaredErrorLossFn();
+        } else if (multiClass) {
+            //Multi-class classification
+            this.outputActivationFn = new SoftmaxActivationFn();
+            this.lossFn = new CrossEntropyLossFn();
+        } else {
+            //Multi-label/binary classification
+            this.outputActivationFn = new SigmoidActivationFn();
+            this.lossFn = new BinaryCrossEntropyLossFn();
+        }
+        this.classification = classification;
+        this.multiClass = multiClass;
         this.epochs = epochs;
         this.learningRate = learningRate;
         this.input = new double[ni];
@@ -123,7 +134,7 @@ public class MultilayerPerceptron {
         }
         //Save the input for calculations during back-propagation
         System.arraycopy(input, 0, this.input, 0, ni);
-        //Activate hidden layer
+        //Activate lower layer
         for (int i = 0; i < this.nh; i++) {
             //Activation of current hidden unit
             double sum = 0;
@@ -134,9 +145,9 @@ public class MultilayerPerceptron {
             //Store the input (activation) coming to the current hidden unit
             this.z1[i] = sum;
             //Store the output (squashed activation) going from the current hidden unit
-            this.h[i] = this.activationFn.squash(sum);
+            this.h[i] = this.hiddenActivationFn.squash(sum);
         }
-        //Activate output layer
+        //Activate upper layer
         for (int i = 0; i < this.no; i++) {
             //Activation of current output unit
             double sum = 0;
@@ -147,7 +158,7 @@ public class MultilayerPerceptron {
             //Store the input (activation) coming to the current output unit
             this.z2[i] = sum;
             //Store the output (squashed activation) going from the current output unit.
-            this.o[i] = this.activationFn.squash(sum);
+            this.o[i] = this.outputActivationFn.squash(sum);
         }
     }
 
@@ -170,7 +181,7 @@ public class MultilayerPerceptron {
             //changes we will use addition in place of subtraction and the minus sign of learning rate is cancelled by
             //this negative sign.
             //todo this is written with assuming squared error loss is used
-            delta2[i] = (target[i] - this.o[i]) * this.activationFn.squashDerivative(this.z2[i]);
+            delta2[i] = (target[i] - this.o[i]) * this.outputActivationFn.squashDerivative(this.z2[i]);
         }
         //Weight difference for upper layer
         for (int i = 0; i < this.nh; i++) {
@@ -188,7 +199,7 @@ public class MultilayerPerceptron {
             }
             //Delta is computed using multiplication of the error component with the derivative of the activation
             //received by the unit
-            delta1[i] *= this.activationFn.squashDerivative(this.z1[i]);
+            delta1[i] *= this.hiddenActivationFn.squashDerivative(this.z1[i]);
         }
         //Weight difference for lower layer
         for (int i = 0; i < this.ni; i++) {
@@ -230,7 +241,7 @@ public class MultilayerPerceptron {
      * @param y output
      */
     public void fit(double x[][], double y[][]) {
-        System.out.println("Epoch;Error");
+        System.out.println("Epoch;Loss");
         for (int epoch = 0; epoch < this.epochs; epoch++) {
             //Start of an epoch
             double error = 0;
@@ -239,7 +250,7 @@ public class MultilayerPerceptron {
                 //Do a forward pass
                 this.forward(x[i]);
                 //Calculate the error
-                error += this.lossFnFunction.calculate(this.o, y[i]);
+                error += this.lossFn.calculate(this.o, y[i]);
                 //Calculate the weight updates using back-propagation
                 this.backward(y[i]);
                 //Update the weights with the changes
@@ -263,6 +274,14 @@ public class MultilayerPerceptron {
             //Copy the outputs
             System.arraycopy(this.o, 0, output[i], 0, this.no);
         }
+        //Apply threshold if it is a classification problem
+        if (this.classification) {
+            for (int i = 0; i < output.length; i++) {
+                for (int j = 0; j < output[0].length; j++) {
+                    output[i][j] = output[i][j] > this.threshold ? 1 : 0;
+                }
+            }
+        }
         return output;
     }
 
@@ -280,32 +299,11 @@ public class MultilayerPerceptron {
         }
         double loss = 0;
         for (int i = 0; i < target.length; i++) {
-            loss += this.lossFnFunction.calculate(predicted[i], target[i]);
+            //todo check we have to average this over no of units and no of samples or not
+            loss += this.lossFn.calculate(predicted[i], target[i]);
         }
         return loss;
     }
-
-    /**
-     * Calculate a score based on number of correct predictions
-     *
-     * @param predicted predicted output
-     * @param target    actual output
-     * @return ration of correct predictions to total predictions
-     */
-    public double accuracyScore(double predicted[][], double target[][]) {
-        if (target.length != predicted.length) {
-            throw new MLPException(String.format("The length of target and predicted is not same: %s != %s",
-                    target.length, predicted.length));
-        }
-        //Check how many predicted values match with output
-        double correct = 0;
-        for (int i = 0; i < target.length; i++) {
-            correct += Arrays.equals(target[i], predicted[i]) ? 1 : 0;
-        }
-        //Return the ration of the correctly predicted to total number of predictions
-        return correct / target.length;
-    }
-
 
     public void printInfo() {
         System.out.println("Weights of lower layer");

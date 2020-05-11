@@ -44,18 +44,18 @@ public class SinExperiment {
         Utils.TrainTestSplit trainTestSplit = Utils.trainTestSplit(input, output, splitSize);
         //Multilayer perceptron object
         MultilayerPerceptron mlp = new MultilayerPerceptron(input[0].length, hiddenUnits, output[0].length,
-                randomStateMLP, learningRate, epochs, type);
+                randomStateMLP, learningRate, epochs, type, false, false);
         //Training
         mlp.fit(trainTestSplit.trainInput, trainTestSplit.trainOutput);
         //Prediction
         System.out.println("***********************");
-        System.out.println("Training accuracy:" + mlp.accuracyScore(mlp.predict(trainTestSplit.trainInput), trainTestSplit.trainOutput));
+        System.out.println("Training accuracy:" + Utils.accuracyScore(mlp.predict(trainTestSplit.trainInput), trainTestSplit.trainOutput));
         System.out.println("***********************");
         System.out.println("Test set predictions");
         double predicted[][] = mlp.predict(trainTestSplit.testInput);
         Utils.prettyPrintPrediction(predicted, trainTestSplit.testOutput);
         System.out.println("***********************");
-        System.out.println("Testing accuracy:" + mlp.accuracyScore(predicted, trainTestSplit.testOutput));
+        System.out.println("Testing accuracy:" + Utils.accuracyScore(predicted, trainTestSplit.testOutput));
         System.out.println("***********************");
         System.out.println("Testing loss:" + mlp.loss(predicted, trainTestSplit.testOutput));
         System.out.println("***********************");

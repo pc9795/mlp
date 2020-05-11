@@ -49,13 +49,13 @@ public class LetterRecognitionExperiment {
         Utils.TrainTestSplit trainTestSplit = Utils.trainTestSplit(input, output, splitSize);
         //Multilayer perceptron object
         MultilayerPerceptron mlp = new MultilayerPerceptron(input[0].length, hiddenUnits, output[0].length,
-                randomState, learningRate, epochs, type);
+                randomState, learningRate, epochs, type, true, true);
         //Training
         mlp.fit(trainTestSplit.trainInput, trainTestSplit.trainOutput);
         //Prediction
-        System.out.println("Training accuracy:" + mlp.accuracyScore(mlp.predict(trainTestSplit.trainInput), trainTestSplit.trainOutput));
+        System.out.println("Training accuracy:" + Utils.accuracyScore(mlp.predict(trainTestSplit.trainInput), trainTestSplit.trainOutput));
         System.out.println("Training loss:" + mlp.loss(mlp.predict(trainTestSplit.trainInput), trainTestSplit.trainOutput));
-        System.out.println("Testing accuracy:" + mlp.accuracyScore(mlp.predict(trainTestSplit.testInput), trainTestSplit.testOutput));
+        System.out.println("Testing accuracy:" + Utils.accuracyScore(mlp.predict(trainTestSplit.testInput), trainTestSplit.testOutput));
         System.out.println("Testing loss:" + mlp.loss(mlp.predict(trainTestSplit.testInput), trainTestSplit.testOutput));
         in.close();
     }

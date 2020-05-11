@@ -1,5 +1,7 @@
 import mlp.MultilayerPerceptron;
+import mlp.activations.ActivationType;
 import mlp.loss_functions.LossFn;
+import mlp.loss_functions.SquaredErrorLossFn;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
@@ -30,13 +32,17 @@ public class TestMLP {
         double[] expectedO = {0.617, 0.629};
         double expectedLoss = 0.199;
         //Setting the initial values
-        MultilayerPerceptron mlp = new MultilayerPerceptron(ni, nh, no, 20);
+        MultilayerPerceptron mlp = new MultilayerPerceptron(ni, nh, no, 20, 0.1,
+                500, ActivationType.SIGMOID, true, false);
         Field w1Field = mlp.getClass().getDeclaredField("w1");
         w1Field.setAccessible(true);
         w1Field.set(mlp, w1);
         Field w2Field = mlp.getClass().getDeclaredField("w2");
         w2Field.setAccessible(true);
         w2Field.set(mlp, w2);
+        Field lossFnFiled = mlp.getClass().getDeclaredField("lossFn");
+        lossFnFiled.setAccessible(true);
+        lossFnFiled.set(mlp, new SquaredErrorLossFn());
         //Calling the method
         Method forwardMethod = mlp.getClass().getDeclaredMethod("forward", double[].class);
         forwardMethod.setAccessible(true);
@@ -59,7 +65,7 @@ public class TestMLP {
         assert Arrays.equals(expectedH, h);
         assert Arrays.equals(expectedO, o);
 
-        Field lossFunctionField = mlp.getClass().getDeclaredField("lossFunction");
+        Field lossFunctionField = mlp.getClass().getDeclaredField("lossFn");
         lossFunctionField.setAccessible(true);
         LossFn lossFnFunction = (LossFn) lossFunctionField.get(mlp);
         double loss = lossFnFunction.calculate(target, (double[]) oField.get(mlp));
@@ -90,7 +96,8 @@ public class TestMLP {
         double[][] expectedDw2 = {{-0.082, 0.023}, {-0.083, 0.023}};
         double[][] expectedDw1 = {{-0.000439, -0.000498}, {-0.000877, -0.000995}};
         //Setting the initial values
-        MultilayerPerceptron mlp = new MultilayerPerceptron(ni, nh, no, 20, learningRate, epochs);
+        MultilayerPerceptron mlp = new MultilayerPerceptron(ni, nh, no, 20, learningRate, epochs,
+                ActivationType.SIGMOID, true, false);
         Field w1Field = mlp.getClass().getDeclaredField("w1");
         w1Field.setAccessible(true);
         w1Field.set(mlp, w1);
@@ -112,6 +119,9 @@ public class TestMLP {
         Field z2Field = mlp.getClass().getDeclaredField("z2");
         z2Field.setAccessible(true);
         z2Field.set(mlp, z2);
+        Field lossFnFiled = mlp.getClass().getDeclaredField("lossFn");
+        lossFnFiled.setAccessible(true);
+        lossFnFiled.set(mlp, new SquaredErrorLossFn());
         //Calling the method
         Method backwardMethod = mlp.getClass().getDeclaredMethod("backward", double[].class);
         backwardMethod.setAccessible(true);
@@ -157,7 +167,8 @@ public class TestMLP {
         double[][] expectedW1 = {{0.14978, 0.249751}, {0.199562, 0.299503}};
         double[][] expectedW2 = {{0.359, 0.511}, {0.409, 0.562}};
         //Setting the initial values
-        MultilayerPerceptron mlp = new MultilayerPerceptron(ni, nh, no, 20, learningRate, epochs);
+        MultilayerPerceptron mlp = new MultilayerPerceptron(ni, nh, no, 20, learningRate, epochs,
+                ActivationType.SIGMOID, true, false);
         Field w1Field = mlp.getClass().getDeclaredField("w1");
         w1Field.setAccessible(true);
         w1Field.set(mlp, w1);
@@ -170,6 +181,9 @@ public class TestMLP {
         Field dw2Field = mlp.getClass().getDeclaredField("dw2");
         dw2Field.setAccessible(true);
         dw2Field.set(mlp, dw2);
+        Field lossFnFiled = mlp.getClass().getDeclaredField("lossFn");
+        lossFnFiled.setAccessible(true);
+        lossFnFiled.set(mlp, new SquaredErrorLossFn());
         //Calling the method
         Method backwardMethod = mlp.getClass().getDeclaredMethod("updateWeights");
         backwardMethod.setAccessible(true);

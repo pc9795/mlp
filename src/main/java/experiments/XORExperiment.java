@@ -22,7 +22,7 @@ public class XORExperiment {
         double[][] output = {{0}, {1}, {1}, {0}};
         //Multi layer perceptron object
         MultilayerPerceptron mlp = new MultilayerPerceptron(input[0].length, hiddenUnits, output[0].length,
-                randomState, learningRate, epochs, type);
+                randomState, learningRate, epochs, type, false, false);
         //Training
         mlp.fit(input, output);
         //Prediction
@@ -30,7 +30,7 @@ public class XORExperiment {
         System.out.println("***********************");
         Utils.prettyPrintPrediction(predicted, output);
         System.out.println("***********************");
-        System.out.println("Accuracy:" + mlp.accuracyScore(predicted, output));
+        System.out.println("Accuracy:" + Utils.accuracyScore(predicted, output));
         System.out.println("***********************");
         mlp.printInfo();
     }
