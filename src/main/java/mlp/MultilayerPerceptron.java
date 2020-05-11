@@ -5,6 +5,7 @@ import mlp.exceptions.MLPException;
 import mlp.loss_functions.LossFn;
 import mlp.loss_functions.SquaredErrorLossFn;
 
+import java.util.Arrays;
 import java.util.Random;
 
 /**
@@ -168,6 +169,7 @@ public class MultilayerPerceptron {
             //NOTE: In actual formula their is a minus (-) sign in front of the delta but while applying the weight
             //changes we will use addition in place of subtraction and the minus sign of learning rate is cancelled by
             //this negative sign.
+            //todo this is written with assuming squared error loss is used
             delta2[i] = (target[i] - this.o[i]) * this.activationFn.squashDerivative(this.z2[i]);
         }
         //Weight difference for upper layer
@@ -228,6 +230,7 @@ public class MultilayerPerceptron {
      * @param y output
      */
     public void fit(double x[][], double y[][]) {
+        System.out.println("Epoch;Error");
         for (int epoch = 0; epoch < this.epochs; epoch++) {
             //Start of an epoch
             double error = 0;
@@ -242,7 +245,7 @@ public class MultilayerPerceptron {
                 //Update the weights with the changes
                 updateWeights();
             }
-            System.out.println(String.format("Error at epoch: %s is %s", epoch, error));
+            System.out.println(String.format("%s;%s", epoch, error));
         }
     }
 
@@ -261,5 +264,65 @@ public class MultilayerPerceptron {
             System.arraycopy(this.o, 0, output[i], 0, this.no);
         }
         return output;
+    }
+
+    /**
+     * Calculate loss for particular prediction and target valuesF
+     *
+     * @param predicted values predicted
+     * @param target    target values
+     * @return loss
+     */
+    public double loss(double predicted[][], double[] target[]) {
+        if (target.length != predicted.length) {
+            throw new MLPException(String.format("The length of target and predicted is not same: %s != %s",
+                    target.length, predicted.length));
+        }
+        double loss = 0;
+        for (int i = 0; i < target.length; i++) {
+            loss += this.lossFnFunction.calculate(predicted[i], target[i]);
+        }
+        return loss;
+    }
+
+    /**
+     * Calculate a score based on number of correct predictions
+     *
+     * @param predicted predicted output
+     * @param target    actual output
+     * @return ration of correct predictions to total predictions
+     */
+    public double accuracyScore(double predicted[][], double target[][]) {
+        if (target.length != predicted.length) {
+            throw new MLPException(String.format("The length of target and predicted is not same: %s != %s",
+                    target.length, predicted.length));
+        }
+        //Check how many predicted values match with output
+        double correct = 0;
+        for (int i = 0; i < target.length; i++) {
+            correct += Arrays.equals(target[i], predicted[i]) ? 1 : 0;
+        }
+        //Return the ration of the correctly predicted to total number of predictions
+        return correct / target.length;
+    }
+
+
+    public void printInfo() {
+        System.out.println("Weights of lower layer");
+        for (int i = 0; i < ni; i++) {
+            System.out.print("| ");
+            for (int j = 0; j < nh; j++) {
+                System.out.print(String.format("%4.5f | ", this.w1[i][j]));
+            }
+            System.out.println();
+        }
+        System.out.println("weights of upper layer");
+        for (int i = 0; i < nh; i++) {
+            System.out.print("| ");
+            for (int j = 0; j < no; j++) {
+                System.out.print(String.format("%4.5f | ", this.w2[i][j]));
+            }
+            System.out.println();
+        }
     }
 }

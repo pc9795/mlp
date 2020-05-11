@@ -10,9 +10,9 @@ public interface LossFn {
      * Caculate loss for given output and target values. "Target" values signifies actual output and "output" values
      * signifies the values obtained from the multi-layer perceptron.
      *
-     * @param output output of the mlp
+     * @param predicted output of the mlp
      * @param target actual output values
      * @return loss between output and target
      */
-    double calculate(double[] output, double[] target);
+    double calculate(double[] predicted, double[] target);
 }

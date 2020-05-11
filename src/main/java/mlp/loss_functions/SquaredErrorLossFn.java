@@ -8,13 +8,13 @@ import mlp.exceptions.MLPException;
  * Purpose: Squared error loss
  **/
 public class SquaredErrorLossFn implements LossFn {
-    public double calculate(double[] output, double[] target) {
-        if (output.length != target.length) {
-            throw new MLPException(String.format("The length of output and target vector is different. %s != %s", output.length, target.length));
+    public double calculate(double[] predicted, double[] target) {
+        if (predicted.length != target.length) {
+            throw new MLPException(String.format("The length of output and target vector is different. %s != %s", predicted.length, target.length));
         }
         double loss = 0;
-        for (int i = 0; i < output.length; i++) {
-            loss += 0.5 * Math.pow(target[i] - output[i], 2);
+        for (int i = 0; i < predicted.length; i++) {
+            loss += 0.5 * Math.pow(target[i] - predicted[i], 2);
         }
         return loss;
     }
