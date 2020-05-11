@@ -2,12 +2,12 @@ package mlp.activations;
 
 /**
  * Created By: Prashant Chaubey
- * Created On: 09-05-2020 21:13
- * Purpose: TODO:
+ * Created On: 09-05-2020 02:21
+ * Purpose: Linear activation y = f(x)
  **/
-public class ReluActivation implements Activation {
+public class LinearActivationFn implements ActivationFn {
     public double squash(double input) {
-        return Math.max(0, input);
+        return input;
     }
 
     public double squashDerivative(double input) {

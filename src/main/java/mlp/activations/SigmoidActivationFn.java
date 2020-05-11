@@ -3,9 +3,9 @@ package mlp.activations;
 /**
  * Created By: Prashant Chaubey
  * Created On: 09-05-2020 02:21
- * Purpose: TODO:
+ * Purpose: Sigmoid activation function y = 1/(1 + e^-x)
  **/
-public class SigmoidActivation implements Activation {
+public class SigmoidActivationFn implements ActivationFn {
     public double squash(double input) {
         return 1.0 / (1.0 + Math.exp(-input));
     }

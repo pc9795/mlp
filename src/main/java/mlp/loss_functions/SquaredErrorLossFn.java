@@ -5,9 +5,9 @@ import mlp.exceptions.MLPException;
 /**
  * Created By: Prashant Chaubey
  * Created On: 09-05-2020 02:28
- * Purpose: TODO:
+ * Purpose: Squared error loss
  **/
-public class SquaredErrorLoss implements Loss {
+public class SquaredErrorLossFn implements LossFn {
     public double calculate(double[] output, double[] target) {
         if (output.length != target.length) {
             throw new MLPException(String.format("The length of output and target vector is different. %s != %s", output.length, target.length));
