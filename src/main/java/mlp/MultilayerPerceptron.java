@@ -3,7 +3,7 @@ package mlp;
 import mlp.activations.*;
 import mlp.exceptions.MLPException;
 import mlp.loss_functions.BinaryCrossEntropyLossFn;
-import mlp.loss_functions.CrossEntropyLossFn;
+import mlp.loss_functions.CategoricalCrossEntropyLossFn;
 import mlp.loss_functions.LossFn;
 import mlp.loss_functions.SquaredErrorLossFn;
 
@@ -15,13 +15,6 @@ import java.util.Random;
  * Purpose: Class that implements a multi layer perceptron with a single hidden layer
  **/
 public class MultilayerPerceptron {
-    //Default values for various hyper parameters
-    private static final int DEFAULT_EPOCHS = 1000;
-    private static final double DEFAULT_LEARNING_STATE = 1e-3;
-    private static final double DEFAULT_MOMENTUM = 0.9;
-    private static final double DEFAULT_LAMBDA = 0;
-    private static final double DEFAULT_EPSILON = 1e-3;
-
     private int ni; //Number of input units
     private int nh; //Number of hidden layer units
     private int no; //Number of output units
@@ -40,13 +33,20 @@ public class MultilayerPerceptron {
     private double h[]; //Contains value of hidden units
     private double o[]; //Contains value of the outputs
     private int randomState; //Random state to control the outcomes of mlp
-    private double threshold = 0.5; //Threshold for classification problems
     private boolean classification; //true if this mlp is solving a classification problem
-    private boolean multiClass; //true if this mlp is solving a multi-class classification problem
-
+    private boolean mulitClass; //true if this mlp is solving a multi class classification problem. If it is not a
+    //classification problem then there is no effect of this value.
+    private int batchSize; //Batch size for mini-batch gradient descent. If it is 1 then it is stochastic gradient
+    // descent and if it is equal to size of the training data then it is batch gradient descent.
 
     public MultilayerPerceptron(int ni, int nh, int no, int randomState, double learningRate, int epochs,
                                 ActivationType type, boolean classification, boolean multiClass) {
+        //Stochastic gradient descent
+        this(ni, nh, no, randomState, learningRate, epochs, type, classification, multiClass, 1);
+    }
+
+    public MultilayerPerceptron(int ni, int nh, int no, int randomState, double learningRate, int epochs,
+                                ActivationType type, boolean classification, boolean multiClass, int batchSize) {
         this.ni = ni;
         this.nh = nh;
         this.no = no;
@@ -59,14 +59,15 @@ public class MultilayerPerceptron {
         } else if (multiClass) {
             //Multi-class classification
             this.outputActivationFn = new SoftmaxActivationFn();
-            this.lossFn = new CrossEntropyLossFn();
+            this.lossFn = new CategoricalCrossEntropyLossFn();
         } else {
             //Multi-label/binary classification
             this.outputActivationFn = new SigmoidActivationFn();
             this.lossFn = new BinaryCrossEntropyLossFn();
         }
         this.classification = classification;
-        this.multiClass = multiClass;
+        this.mulitClass = multiClass;
+        this.batchSize = batchSize;
         this.epochs = epochs;
         this.learningRate = learningRate;
         this.input = new double[ni];
@@ -97,6 +98,8 @@ public class MultilayerPerceptron {
                 return new LinearActivationFn();
             case TANH:
                 return new TanhActivationFn();
+            case LEAKY_RELU:
+                return new LeakyReluActivationFn();
         }
         throw new MLPException(String.format("Type: %s is not registered", type));
     }
@@ -144,9 +147,9 @@ public class MultilayerPerceptron {
             }
             //Store the input (activation) coming to the current hidden unit
             this.z1[i] = sum;
-            //Store the output (squashed activation) going from the current hidden unit
-            this.h[i] = this.hiddenActivationFn.squash(sum);
         }
+        //Apply the activation function to the activations of the hidden layer
+        this.h = this.hiddenActivationFn.squash(this.z1);
         //Activate upper layer
         for (int i = 0; i < this.no; i++) {
             //Activation of current output unit
@@ -157,9 +160,9 @@ public class MultilayerPerceptron {
             }
             //Store the input (activation) coming to the current output unit
             this.z2[i] = sum;
-            //Store the output (squashed activation) going from the current output unit.
-            this.o[i] = this.outputActivationFn.squash(sum);
         }
+        //Apply the activation function to the activations of the output layer
+        this.o = this.outputActivationFn.squash(this.z2);
     }
 
     /**
@@ -175,22 +178,26 @@ public class MultilayerPerceptron {
         //Delta for upper layer - between hidden units and output units
         double[] delta2 = new double[this.no];
         for (int i = 0; i < this.no; i++) {
-            //Delta is the difference between "target" value and "output" of the mlp multiplied by the derivative of the
-            //activation received by this unit.
+            //The combinations used in the code: linear activation + squared error loss for regression ,
+            //sigmoid/logistic activation + binary cross entropy for binary and multi-label classification, and
+            //softmax activation + categorical cross entropy for multi-class classification result in the below delta
+            //for last layer after further calculation and simplification
+            //Ref: https://www.ics.uci.edu/~pjsadows/notes.pdf
             //NOTE: In actual formula their is a minus (-) sign in front of the delta but while applying the weight
             //changes we will use addition in place of subtraction and the minus sign of learning rate is cancelled by
             //this negative sign.
-            //todo this is written with assuming squared error loss is used
-            delta2[i] = (target[i] - this.o[i]) * this.outputActivationFn.squashDerivative(this.z2[i]);
+            delta2[i] = (target[i] - this.o[i]);
         }
         //Weight difference for upper layer
         for (int i = 0; i < this.nh; i++) {
             for (int j = 0; j < this.no; j++) {
-                this.dw2[i][j] = this.h[i] * delta2[j];
+                this.dw2[i][j] += this.h[i] * delta2[j];
             }
         }
         //Delta for lower layer
         double[] delta1 = new double[this.nh];
+        //Derivatives of the activations of the lower layer
+        double[] derivatives = this.hiddenActivationFn.squashDerivative(this.z1);
         for (int i = 0; i < this.nh; i++) {
             //Calculating delta for the current hidden unit. Because a hidden unit affects all the outputs we have to
             //consider the contribution of each output unit in the calculation.
@@ -199,12 +206,12 @@ public class MultilayerPerceptron {
             }
             //Delta is computed using multiplication of the error component with the derivative of the activation
             //received by the unit
-            delta1[i] *= this.hiddenActivationFn.squashDerivative(this.z1[i]);
+            delta1[i] *= derivatives[i];
         }
         //Weight difference for lower layer
         for (int i = 0; i < this.ni; i++) {
             for (int j = 0; j < this.nh; j++) {
-                this.dw1[i][j] = this.input[i] * delta1[j];
+                this.dw1[i][j] += this.input[i] * delta1[j];
             }
         }
     }
@@ -254,7 +261,11 @@ public class MultilayerPerceptron {
                 //Calculate the weight updates using back-propagation
                 this.backward(y[i]);
                 //Update the weights with the changes
-                updateWeights();
+                //`i` is zero indexed therefore adding 1.
+                //Update the weights at the batch end and at the last index
+                if ((i + 1) % batchSize == 0 || i == x.length - 1) {
+                    updateWeights();
+                }
             }
             System.out.println(String.format("%s;%s", epoch, error));
         }
@@ -274,11 +285,13 @@ public class MultilayerPerceptron {
             //Copy the outputs
             System.arraycopy(this.o, 0, output[i], 0, this.no);
         }
-        //Apply threshold if it is a classification problem
-        if (this.classification) {
+        //Apply threshold if it is a binary/multi-label classification problem
+        if (this.classification && !this.mulitClass) {
+            //Threshold for classification problems
+            double threshold = 0.5;
             for (int i = 0; i < output.length; i++) {
                 for (int j = 0; j < output[0].length; j++) {
-                    output[i][j] = output[i][j] > this.threshold ? 1 : 0;
+                    output[i][j] = output[i][j] > threshold ? 1 : 0;
                 }
             }
         }
@@ -299,10 +312,9 @@ public class MultilayerPerceptron {
         }
         double loss = 0;
         for (int i = 0; i < target.length; i++) {
-            //todo check we have to average this over no of units and no of samples or not
             loss += this.lossFn.calculate(predicted[i], target[i]);
         }
-        return loss;
+        return loss / target.length;
     }
 
     public void printInfo() {

@@ -4,10 +4,10 @@ import mlp.exceptions.MLPException;
 
 /**
  * Created By: Prashant Chaubey
- * Created On: 11-05-2020 19:53
- * Purpose: Binary cross entropy for multi-label and binary classification
+ * Created On: 11-05-2020 19:38
+ * Purpose: Categorical cross entropy for multi-class classification
  **/
-public class BinaryCrossEntropyLossFn implements LossFn {
+public class CategoricalCrossEntropyLossFn implements LossFn {
     @Override
     public double calculate(double[] predicted, double[] target) {
         if (predicted.length != target.length) {
@@ -16,7 +16,7 @@ public class BinaryCrossEntropyLossFn implements LossFn {
         }
         double loss = 0;
         for (int i = 0; i < target.length; i++) {
-            loss += -(target[i] * Math.log(predicted[i])) - ((1 - target[i]) * Math.log(1 - predicted[i]));
+            loss += -(target[i] * Math.log(predicted[i]));
         }
         return loss;
     }

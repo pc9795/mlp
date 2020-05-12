@@ -16,9 +16,9 @@ public class SinExperiment {
         //Hyper parameters
         int randomStateMLP = 20;
         int hiddenUnits = 5;
-        double learningRate = 0.1;
-        int epochs = 50000;
-        ActivationType type = ActivationType.SIGMOID;
+        double learningRate = 0.01;
+        int epochs = 3000;
+        ActivationType type = ActivationType.LINEAR;
         //Input and output
         int upperLimit = 1;
         int lowerLimit = -1;
@@ -30,14 +30,9 @@ public class SinExperiment {
         //Generate output
         double[][] output = new double[count][1];
         for (int i = 0; i < count; i++) {
-            double sum = input[i][0];
-            //This boolean variable will alternate to create alternate signs
-            boolean positive = false;
-            for (int j = 1; j < vectorSize; j++) {
-                sum = positive ? sum + input[i][j] : sum - input[i][j];
-                positive = !positive;
-            }
-            output[i][0] = Math.sin(sum);
+            //We know the vector size is 4 that's why used this type of representation. This line of code is not
+            //extensible if we want to increase the vector size but it is more readable.
+            output[i][0] = Math.sin(input[i][0] - input[i][1] + input[i][2] - input[i][3]);
         }
         //Splitting the data into 150 training examples and 50 testing examples
         double splitSize = 0.75;
@@ -49,15 +44,14 @@ public class SinExperiment {
         mlp.fit(trainTestSplit.trainInput, trainTestSplit.trainOutput);
         //Prediction
         System.out.println("***********************");
-        System.out.println("Training accuracy:" + Utils.accuracyScore(mlp.predict(trainTestSplit.trainInput), trainTestSplit.trainOutput));
+        System.out.println(String.format("Training loss:%1.8f", mlp.loss(mlp.predict(trainTestSplit.trainInput),
+                trainTestSplit.trainOutput)));
         System.out.println("***********************");
         System.out.println("Test set predictions");
         double predicted[][] = mlp.predict(trainTestSplit.testInput);
         Utils.prettyPrintPrediction(predicted, trainTestSplit.testOutput);
         System.out.println("***********************");
-        System.out.println("Testing accuracy:" + Utils.accuracyScore(predicted, trainTestSplit.testOutput));
-        System.out.println("***********************");
-        System.out.println("Testing loss:" + mlp.loss(predicted, trainTestSplit.testOutput));
+        System.out.println(String.format("Testing loss:%1.8f", mlp.loss(predicted, trainTestSplit.testOutput)));
         System.out.println("***********************");
         mlp.printInfo();
     }

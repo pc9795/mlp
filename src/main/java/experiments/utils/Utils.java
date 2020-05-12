@@ -12,27 +12,6 @@ import java.util.Arrays;
 public class Utils {
 
     /**
-     * Calculate a score based on number of correct predictions
-     *
-     * @param predicted predicted output
-     * @param target    actual output
-     * @return ration of correct predictions to total predictions
-     */
-    public static double accuracyScore(double predicted[][], double target[][]) {
-        if (target.length != predicted.length) {
-            throw new MLPException(String.format("The length of target and predicted is not same: %s != %s",
-                    target.length, predicted.length));
-        }
-        //Check how many predicted values match with output
-        double correct = 0;
-        for (int i = 0; i < target.length; i++) {
-            correct += Arrays.equals(target[i], predicted[i]) ? 1 : 0;
-        }
-        //Return the ration of the correctly predicted to total number of predictions
-        return correct / target.length;
-    }
-
-    /**
      * Class to contains information about training and testing data
      */
     public static class TrainTestSplit {
@@ -96,6 +75,44 @@ public class Utils {
         System.out.println("Output;Predicted");
         for (int i = 0; i < output.length; i++) {
             System.out.println(Arrays.toString(output[i]) + ";" + Arrays.toString(predicted[i]));
+        }
+    }
+
+    public static class MinMaxScaler {
+        private boolean isFitted = false;
+        private double max[];
+        private double min[];
+
+        public void fit(double x[][]) {
+            isFitted = true;
+            max = new double[x[0].length];
+            min = new double[x[0].length];
+            Arrays.fill(max, -Double.MAX_VALUE);
+            Arrays.fill(min, Double.MAX_VALUE);
+            for (int j = 0; j < x[0].length; j++) {
+                for (double[] aX : x) {
+                    if (aX[j] > max[j]) {
+                        max[j] = aX[j];
+                    }
+                    if (aX[j] < min[j]) {
+                        min[j] = aX[j];
+                    }
+                }
+            }
+        }
+
+        public void inplaceTransform(double[][] x) {
+            if (!isFitted) {
+                throw new MLPException("This scaler is need to be fitted before use");
+            }
+            if (x[0].length != max.length) {
+                throw new MLPException(String.format("The number of features expected %s found %s", max.length, x[0].length));
+            }
+            for (int j = 0; j < x[0].length; j++) {
+                for (int i = 0; i < x.length; i++) {
+                    x[i][j] = (x[i][j] - min[j]) / (max[j] - min[j]);
+                }
+            }
         }
     }
 }

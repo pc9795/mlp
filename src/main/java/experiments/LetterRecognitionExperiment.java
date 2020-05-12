@@ -3,6 +3,7 @@ package experiments;
 import experiments.utils.Utils;
 import mlp.MultilayerPerceptron;
 import mlp.activations.ActivationType;
+import mlp.exceptions.MLPException;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -19,10 +20,11 @@ public class LetterRecognitionExperiment {
     public static void main(String[] args) throws FileNotFoundException {
         //Hyper parameters
         int randomState = 20;
-        int hiddenUnits = 10;
-        double learningRate = 0.1;
-        int epochs = 500;
-        ActivationType type = ActivationType.LINEAR;
+        int hiddenUnits = 100;
+        double learningRate = 0.01;
+        int epochs = 1000;
+        ActivationType type = ActivationType.TANH;
+        int batchSize = 150;
         //Input and output
         int count = 20000;
         int outputVectorSize = 26;
@@ -47,16 +49,74 @@ public class LetterRecognitionExperiment {
         //Split the data into 80:20 ratio for training and testing respectively.
         double splitSize = 0.8;
         Utils.TrainTestSplit trainTestSplit = Utils.trainTestSplit(input, output, splitSize);
+        //Normalization
+        Utils.MinMaxScaler scaler = new Utils.MinMaxScaler();
+        scaler.fit(trainTestSplit.trainInput);
+        scaler.inplaceTransform(trainTestSplit.trainInput);
+        scaler.inplaceTransform(trainTestSplit.testInput);
         //Multilayer perceptron object
         MultilayerPerceptron mlp = new MultilayerPerceptron(input[0].length, hiddenUnits, output[0].length,
-                randomState, learningRate, epochs, type, true, true);
+                randomState, learningRate, epochs, type, true, true, batchSize);
         //Training
+        long now = System.currentTimeMillis();
         mlp.fit(trainTestSplit.trainInput, trainTestSplit.trainOutput);
         //Prediction
-        System.out.println("Training accuracy:" + Utils.accuracyScore(mlp.predict(trainTestSplit.trainInput), trainTestSplit.trainOutput));
-        System.out.println("Training loss:" + mlp.loss(mlp.predict(trainTestSplit.trainInput), trainTestSplit.trainOutput));
-        System.out.println("Testing accuracy:" + Utils.accuracyScore(mlp.predict(trainTestSplit.testInput), trainTestSplit.testOutput));
-        System.out.println("Testing loss:" + mlp.loss(mlp.predict(trainTestSplit.testInput), trainTestSplit.testOutput));
+        System.out.println("***********************");
+
+        double[][] predicted = mlp.predict(trainTestSplit.testInput);
+        prettyPrintPrediction(predicted, trainTestSplit.testOutput);
+        System.out.println("***********************");
+        predicted = mlp.predict(trainTestSplit.trainInput);
+        System.out.println("Training accuracy:" + accuracyScore(predicted, trainTestSplit.trainOutput));
+        System.out.println("Training loss:" + mlp.loss(predicted, trainTestSplit.trainOutput));
+        predicted = mlp.predict(trainTestSplit.testInput);
+        System.out.println("Testing accuracy:" + accuracyScore(predicted, trainTestSplit.testOutput));
+        System.out.println("Testing loss:" + mlp.loss(predicted, trainTestSplit.testOutput));
+        System.out.println("***********************");
+        System.out.println("Execution time(in secs):" + (System.currentTimeMillis() - now) / 1000.0);
+        System.out.println("***********************");
         in.close();
+    }
+
+    /**
+     * Calculate a score based on number of correct predictions
+     *
+     * @param predicted predicted output
+     * @param target    actual output
+     * @return ration of correct predictions to total predictions
+     */
+    private static double accuracyScore(double predicted[][], double target[][]) {
+        if (target.length != predicted.length) {
+            throw new MLPException(String.format("The length of target and predicted is not same: %s != %s",
+                    target.length, predicted.length));
+        }
+        //Check how many predicted values match with output
+        double correct = 0;
+        for (int i = 0; i < target.length; i++) {
+            correct += getAlphabet(target[i]) == getAlphabet(predicted[i]) ? 1 : 0;
+        }
+        //Return the ration of the correctly predicted to total number of predictions
+        return correct / target.length;
+    }
+
+    private static void prettyPrintPrediction(double[][] predicted, double[][] output) {
+        if (output.length != predicted.length) {
+            throw new MLPException(String.format("The length of output and predicted is not same: %s != %s",
+                    output.length, predicted.length));
+        }
+        System.out.println("Output;Predicted");
+        for (int i = 0; i < output.length; i++) {
+            System.out.println(getAlphabet(output[i]) + ";" + getAlphabet(predicted[i]));
+        }
+    }
+
+    private static char getAlphabet(double[] probabilities) {
+        int maxIndex = 0;
+        for (int i = 0; i < probabilities.length; i++) {
+            if (probabilities[i] > probabilities[maxIndex]) {
+                maxIndex = i;
+            }
+        }
+        return (char) ('A' + maxIndex);
     }
 }

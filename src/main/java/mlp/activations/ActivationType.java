@@ -6,5 +6,5 @@ package mlp.activations;
  * Purpose: Type of all the activation functions this library supports
  **/
 public enum ActivationType {
-    TANH, SIGMOID, LINEAR, RELU
+    TANH, SIGMOID, LINEAR, RELU, LEAKY_RELU
 }

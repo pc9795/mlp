@@ -6,11 +6,21 @@ package mlp.activations;
  * Purpose: Relu activation y = max(0, x)
  **/
 public class ReluActivationFn implements ActivationFn {
-    public double squash(double input) {
-        return Math.max(0, input);
+    @Override
+    public double[] squash(double[] input) {
+        double[] output = new double[input.length];
+        for (int i = 0; i < input.length; i++) {
+            output[i] = Math.max(0, input[i]);
+        }
+        return output;
     }
 
-    public double squashDerivative(double input) {
-        return input <= 0 ? 0 : 1;
+    @Override
+    public double[] squashDerivative(double[] input) {
+        double[] output = new double[input.length];
+        for (int i = 0; i < input.length; i++) {
+            output[i] = input[i] <= 0 ? 0 : 1;
+        }
+        return output;
     }
 }

@@ -8,18 +8,18 @@ package mlp.activations;
 public interface ActivationFn {
 
     /**
-     * Apply the function to the input
+     * Apply the function to the inputs
      *
-     * @param input input
-     * @return value of the activation function after applying the input
+     * @param x inputs
+     * @return value of the inputs after applying the activation function
      */
-    double squash(double input);
+    double[] squash(double[] x);
 
     /**
      * Apply the derivative of the function to the input
      *
-     * @param input input
-     * @return value of the derivative of the activation function after applying the input
+     * @param x input
+     * @return value of the inputs after applying the derivative of the activation function
      */
-    double squashDerivative(double input);
+    double[] squashDerivative(double[] x);
 }
