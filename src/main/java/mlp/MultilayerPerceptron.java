@@ -14,6 +14,7 @@ import java.util.Random;
  * Created On: 23-03-2020 09:41
  * Purpose: Class that implements a multi layer perceptron with a single hidden layer
  **/
+@SuppressWarnings("unused")
 public class MultilayerPerceptron {
     private int ni; //Number of input units
     private int nh; //Number of hidden layer units
@@ -34,7 +35,7 @@ public class MultilayerPerceptron {
     private double o[]; //Contains value of the outputs
     private int randomState; //Random state to control the outcomes of mlp
     private boolean classification; //true if this mlp is solving a classification problem
-    private boolean mulitClass; //true if this mlp is solving a multi class classification problem. If it is not a
+    private boolean multiClass; //true if this mlp is solving a multi class classification problem. If it is not a
     //classification problem then there is no effect of this value.
     private int batchSize; //Batch size for mini-batch gradient descent. If it is 1 then it is stochastic gradient
     // descent and if it is equal to size of the training data then it is batch gradient descent.
@@ -131,7 +132,7 @@ public class MultilayerPerceptron {
             this.lossFn = new BinaryCrossEntropyLossFn();
         }
         this.classification = classification;
-        this.mulitClass = multiClass;
+        this.multiClass = multiClass;
         this.batchSize = batchSize;
         this.epochs = epochs;
         this.learningRate = learningRate;
@@ -172,21 +173,31 @@ public class MultilayerPerceptron {
     /**
      * Method to initialize the weights of the mlp to small random values. This randomization is controlled by
      * variable `randomState`. Same values of it will cause same weight initialization
+     * <p>
+     * Xavier initialization is used. REF: http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf
      */
     private void randomise() {
-        double upperLimit = 0.5;
-        double lowerLimit = -0.5;
+        double factor = 6;
+        if (hiddenActivationFn instanceof SigmoidActivationFn) {
+            factor = 2;
+        }
+        //Bound for weights between input and hidden layer
+        double initBound = Math.sqrt(factor / (this.ni + this.nh));
         Random random = new Random(this.randomState);
         //Random values for weights of lower layer - between input and hidden layer
         for (int i = 0; i < this.ni; i++) {
             for (int j = 0; j < this.nh; j++) {
-                this.w1[i][j] = (random.nextDouble() * (upperLimit - lowerLimit)) + lowerLimit;
+                //Picking a value between (-initBound, initBound).
+                this.w1[i][j] = (random.nextDouble() * (initBound - (-initBound))) + (-initBound);
             }
         }
+        //Bound for weights between hidden and output layer
+        initBound = Math.sqrt(factor / (this.nh + this.no));
         //Random values for weights of upper layer - between hidden and output layer
         for (int i = 0; i < this.nh; i++) {
             for (int j = 0; j < this.no; j++) {
-                this.w2[i][j] = (random.nextDouble() * (upperLimit - lowerLimit)) + lowerLimit;
+                //Picking a value between (-initBound, initBound).
+                this.w2[i][j] = (random.nextDouble() * (initBound - (-initBound))) + (-initBound);
             }
         }
     }
@@ -351,7 +362,7 @@ public class MultilayerPerceptron {
             System.arraycopy(this.o, 0, output[i], 0, this.no);
         }
         //Apply threshold if it is a binary/multi-label classification problem
-        if (this.classification && !this.mulitClass) {
+        if (this.classification && !this.multiClass) {
             //Threshold for classification problems
             double threshold = 0.5;
             for (int i = 0; i < output.length; i++) {
