@@ -7,6 +7,7 @@ import mlp.loss_functions.CategoricalCrossEntropyLossFn;
 import mlp.loss_functions.LossFn;
 import mlp.loss_functions.SquaredErrorLossFn;
 
+import java.util.Arrays;
 import java.util.Random;
 
 /**
@@ -28,14 +29,16 @@ public class MultilayerPerceptron {
     private double w2[][]; //Weights of the upper layer
     private double dw1[][]; //Weight changes going to be applied to lower layer
     private double dw2[][]; //Weight changes going to be applied to upper layer
+    private double b1[]; //Biases of the lower layer
+    private double b2[]; //Biases of the upper layer
+    private double db1[]; //Bias changes going to be applied to lower layer
+    private double db2[]; //Bias changes going to be applied to upper layer
     private double z1[]; //Activations of the lower layer
     private double z2[]; //Activations of the upper layer
     private double input[]; //Contains value of input units
     private double h[]; //Contains value of hidden units
     private double o[]; //Contains value of the outputs
     private int randomState; //Random state to control the outcomes of mlp
-    private boolean classification; //true if this mlp is solving a classification problem
-    private boolean multiClass; //true if this mlp is solving a multi class classification problem. If it is not a
     //classification problem then there is no effect of this value.
     private int batchSize; //Batch size for mini-batch gradient descent. If it is 1 then it is stochastic gradient
     // descent and if it is equal to size of the training data then it is batch gradient descent.
@@ -118,6 +121,9 @@ public class MultilayerPerceptron {
         this.no = no;
         this.randomState = randomState;
         this.hiddenActivationFn = this.getActivation(type);
+
+        //Choosing loss function and outer layer activation according to the problem (regression, binary/multi-label
+        //classification, multi-class classification)
         if (!classification) {
             //Regression
             this.outputActivationFn = new LinearActivationFn();
@@ -131,8 +137,7 @@ public class MultilayerPerceptron {
             this.outputActivationFn = new SigmoidActivationFn();
             this.lossFn = new BinaryCrossEntropyLossFn();
         }
-        this.classification = classification;
-        this.multiClass = multiClass;
+
         this.batchSize = batchSize;
         this.epochs = epochs;
         this.learningRate = learningRate;
@@ -145,6 +150,10 @@ public class MultilayerPerceptron {
         this.dw1 = new double[ni][nh]; //All values will be zero by default
         this.w2 = new double[nh][no];
         this.dw2 = new double[nh][no]; //All values will be zero by default
+        this.b1 = new double[nh];
+        this.db1 = new double[nh]; //All values will be zero by default
+        this.b2 = new double[no];
+        this.db2 = new double[no]; //All values will be zero by default
         randomise();
     }
 
@@ -167,7 +176,7 @@ public class MultilayerPerceptron {
             case LEAKY_RELU:
                 return new LeakyReluActivationFn();
         }
-        throw new MLPException(String.format("Type: %s is not registered", type));
+        throw new MLPException(String.format("Type: %s cannot be applied as an activation for hidden layers", type));
     }
 
     /**
@@ -181,9 +190,11 @@ public class MultilayerPerceptron {
         if (hiddenActivationFn instanceof SigmoidActivationFn) {
             factor = 2;
         }
-        //Bound for weights between input and hidden layer
+
+        //Bound for weights between input and hidden layer. Xavier Initialization
         double initBound = Math.sqrt(factor / (this.ni + this.nh));
         Random random = new Random(this.randomState);
+
         //Random values for weights of lower layer - between input and hidden layer
         for (int i = 0; i < this.ni; i++) {
             for (int j = 0; j < this.nh; j++) {
@@ -191,14 +202,28 @@ public class MultilayerPerceptron {
                 this.w1[i][j] = (random.nextDouble() * (initBound - (-initBound))) + (-initBound);
             }
         }
-        //Bound for weights between hidden and output layer
+
+        //Random values for biases of lower layer - between input and hidden layer
+        for (int i = 0; i < this.nh; i++) {
+            //Picking a value between (-initBound, initBound).
+            this.b1[i] = (random.nextDouble() * (initBound - (-initBound))) + (-initBound);
+        }
+
+        //Bound for weights between hidden and output layer. Xavier Initialization
         initBound = Math.sqrt(factor / (this.nh + this.no));
+
         //Random values for weights of upper layer - between hidden and output layer
         for (int i = 0; i < this.nh; i++) {
             for (int j = 0; j < this.no; j++) {
                 //Picking a value between (-initBound, initBound).
                 this.w2[i][j] = (random.nextDouble() * (initBound - (-initBound))) + (-initBound);
             }
+        }
+
+        //Random values for biases of upper layer - between hidden and output layer
+        for (int i = 0; i < this.no; i++) {
+            //Picking a value between (-initBound, initBound).
+            this.b2[i] = (random.nextDouble() * (initBound - (-initBound))) + (-initBound);
         }
     }
 
@@ -211,8 +236,10 @@ public class MultilayerPerceptron {
         if (input.length != this.ni) {
             throw new MLPException(String.format("Expected no of units in input: %s but found %s", this.ni, input.length));
         }
+
         //Save the input for calculations during back-propagation
         System.arraycopy(input, 0, this.input, 0, ni);
+
         //Activate lower layer
         for (int i = 0; i < this.nh; i++) {
             //Activation of current hidden unit
@@ -222,10 +249,12 @@ public class MultilayerPerceptron {
                 sum += this.input[j] * this.w1[j][i];
             }
             //Store the input (activation) coming to the current hidden unit
-            this.z1[i] = sum;
+            this.z1[i] = sum + this.b1[i];
         }
+
         //Apply the activation function to the activations of the hidden layer
         this.h = this.hiddenActivationFn.squash(this.z1);
+
         //Activate upper layer
         for (int i = 0; i < this.no; i++) {
             //Activation of current output unit
@@ -235,8 +264,9 @@ public class MultilayerPerceptron {
                 sum += this.h[j] * this.w2[j][i];
             }
             //Store the input (activation) coming to the current output unit
-            this.z2[i] = sum;
+            this.z2[i] = sum + this.b2[i];
         }
+
         //Apply the activation function to the activations of the output layer
         this.o = this.outputActivationFn.squash(this.z2);
     }
@@ -251,29 +281,35 @@ public class MultilayerPerceptron {
             throw new MLPException(String.format("Expected no of units in target: %s but found %s",
                     this.no, target.length));
         }
+
         //Delta for upper layer - between hidden units and output units
         double[] delta2 = new double[this.no];
         for (int i = 0; i < this.no; i++) {
             //The combinations used in the code: linear activation + squared error loss for regression ,
             //sigmoid/logistic activation + binary cross entropy for binary and multi-label classification, and
             //softmax activation + categorical cross entropy for multi-class classification result in the below delta
-            //for last layer after further calculation and simplification
+            //for last layer after further calculation and simplification.
             //Ref: https://www.ics.uci.edu/~pjsadows/notes.pdf
             //NOTE: In actual formula their is a minus (-) sign in front of the delta but while applying the weight
             //changes we will use addition in place of subtraction and the minus sign of learning rate is cancelled by
             //this negative sign.
             delta2[i] = (target[i] - this.o[i]);
         }
-        //Weight difference for upper layer
+
+        //Weight difference for upper layer - between hidden units and output units
         for (int i = 0; i < this.nh; i++) {
             for (int j = 0; j < this.no; j++) {
                 this.dw2[i][j] += this.h[i] * delta2[j];
             }
         }
-        //Delta for lower layer
-        double[] delta1 = new double[this.nh];
-        //Derivatives of the activations of the lower layer
+        //Bias difference for upper layer - between hidden units and output units
+        System.arraycopy(delta2, 0, this.db2, 0, delta2.length);
+
+        //Derivatives of the activations of the lower layer - between input and hidden layers
         double[] derivatives = this.hiddenActivationFn.squashDerivative(this.z1);
+
+        //Delta for lower layer - between input and hidden layers
+        double[] delta1 = new double[this.nh];
         for (int i = 0; i < this.nh; i++) {
             //Calculating delta for the current hidden unit. Because a hidden unit affects all the outputs we have to
             //consider the contribution of each output unit in the calculation.
@@ -284,12 +320,16 @@ public class MultilayerPerceptron {
             //received by the unit
             delta1[i] *= derivatives[i];
         }
-        //Weight difference for lower layer
+
+        //Weight difference for lower layer - between input and hidden layers
         for (int i = 0; i < this.ni; i++) {
             for (int j = 0; j < this.nh; j++) {
                 this.dw1[i][j] += this.input[i] * delta1[j];
             }
         }
+
+        //Bias difference of the activations of the lower layer
+        System.arraycopy(delta1, 0, this.db1, 0, delta1.length);
     }
 
     /**
@@ -297,24 +337,42 @@ public class MultilayerPerceptron {
      */
     private void updateWeights() {
         //Update weights in lower layer
-        for (int i = 0; i < this.w1.length; i++) {
-            for (int j = 0; j < this.w1[0].length; j++) {
+        for (int i = 0; i < this.ni; i++) {
+            for (int j = 0; j < this.nh; j++) {
                 //A positive sign is used because while calculating the delta we left out the minus sign there. So that
                 //minus sign cancels the minus sign here.
                 this.w1[i][j] += this.learningRate * this.dw1[i][j];
             }
         }
+
+        //Update bias in lower layer
+        for (int i = 0; i < this.nh; i++) {
+            //A positive sign is used because while calculating the delta we left out the minus sign there. So that
+            //minus sign cancels the minus sign here.
+            this.b1[i] += this.learningRate * this.db1[i];
+        }
+
         //Update weights in upper layer
-        for (int i = 0; i < this.w2.length; i++) {
-            for (int j = 0; j < this.w2[0].length; j++) {
+        for (int i = 0; i < this.nh; i++) {
+            for (int j = 0; j < this.no; j++) {
                 //A positive sign is used because while calculating the delta we left out the minus sign there. So that
                 //minus sign cancels the minus sign here.
                 this.w2[i][j] += this.learningRate * this.dw2[i][j];
             }
         }
+
+        //Update bias in upper layer
+        for (int i = 0; i < this.no; i++) {
+            //A positive sign is used because while calculating the delta we left out the minus sign there. So that
+            //minus sign cancels the minus sign here.
+            this.b2[i] += this.learningRate * this.db2[i];
+        }
+
         //Reset the weight changes to zeroes.
         this.dw1 = new double[ni][nh];
         this.dw2 = new double[nh][no];
+        this.db1 = new double[nh];
+        this.db2 = new double[no];
     }
 
     /**
@@ -361,16 +419,6 @@ public class MultilayerPerceptron {
             //Copy the outputs
             System.arraycopy(this.o, 0, output[i], 0, this.no);
         }
-        //Apply threshold if it is a binary/multi-label classification problem
-        if (this.classification && !this.multiClass) {
-            //Threshold for classification problems
-            double threshold = 0.5;
-            for (int i = 0; i < output.length; i++) {
-                for (int j = 0; j < output[0].length; j++) {
-                    output[i][j] = output[i][j] > threshold ? 1 : 0;
-                }
-            }
-        }
         return output;
     }
 
@@ -386,15 +434,32 @@ public class MultilayerPerceptron {
             throw new MLPException(String.format("The length of target and predicted is not same: %s != %s",
                     target.length, predicted.length));
         }
+
         double loss = 0;
         for (int i = 0; i < target.length; i++) {
             loss += this.lossFn.calculate(predicted[i], target[i]);
         }
+
         return loss / target.length;
     }
 
     public void printInfo() {
+        System.out.println("***********************");
+        System.out.println("Hyper parameters");
+        System.out.println("***********************");
+        System.out.println(String.format("Configuration: %s X %s X %s", this.ni, this.nh, this.no));
+        System.out.println("Hidden layer activation function: " + this.hiddenActivationFn.getClass().getName());
+        System.out.println("Output layer activation function: " + this.outputActivationFn.getClass().getName());
+        System.out.println("Loss function: " + this.lossFn.getClass().getName());
+        System.out.println("Epochs: " + this.epochs);
+        System.out.println("Learning rate: " + this.learningRate);
+        System.out.println("(Gradient Descent) Batch size: " + this.batchSize);
+        System.out.println("Random seed: " + this.randomState);
+
+        System.out.println("***********************");
         System.out.println("Weights of lower layer");
+        System.out.println("***********************");
+        System.out.println();
         for (int i = 0; i < ni; i++) {
             System.out.print("| ");
             for (int j = 0; j < nh; j++) {
@@ -402,7 +467,11 @@ public class MultilayerPerceptron {
             }
             System.out.println();
         }
+
+        System.out.println("***********************");
         System.out.println("weights of upper layer");
+        System.out.println("***********************");
+        System.out.println();
         for (int i = 0; i < nh; i++) {
             System.out.print("| ");
             for (int j = 0; j < no; j++) {
