@@ -182,9 +182,9 @@ public class TestMLP {
         lossFnFiled.set(mlp, new SquaredErrorLossFn());
 
         //Calling the method
-        Method backwardMethod = mlp.getClass().getDeclaredMethod("updateWeights");
+        Method backwardMethod = mlp.getClass().getDeclaredMethod("updateWeights", int.class);
         backwardMethod.setAccessible(true);
-        backwardMethod.invoke(mlp);
+        backwardMethod.invoke(mlp, 1);
 
         //Getting the fields that need to be checked
         Field w1Field = mlp.getClass().getDeclaredField("w1");

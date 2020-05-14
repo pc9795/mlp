@@ -15,21 +15,29 @@ public class XORExperiment {
         int randomState = 20;
         int hiddenUnits = 4;
         double learningRate = 0.01;
-        int epochs = 6000;
+        int epochs = 2;
         ActivationType type = ActivationType.TANH;
+
         //Input and output
         double[][] input = {{0, 0}, {0, 1}, {1, 0}, {1, 1}};
         double[][] output = {{0}, {1}, {1}, {0}};
+
         //Multi layer perceptron object
         MultilayerPerceptron mlp = new MultilayerPerceptron(input[0].length, hiddenUnits, output[0].length,
                 randomState, learningRate, epochs, type, true, false);
+
         //Training
         mlp.fit(input, output);
+
         //Prediction
         double predicted[][] = mlp.predict(input);
+        System.out.println();
         System.out.println("***********************");
         Utils.prettyPrintPrediction(predicted, output);
         System.out.println("***********************");
+
+        //MLP info
+        System.out.println();
         mlp.printInfo();
     }
 }

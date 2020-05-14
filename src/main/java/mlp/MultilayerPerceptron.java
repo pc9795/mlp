@@ -333,15 +333,18 @@ public class MultilayerPerceptron {
     }
 
     /**
-     * Function to update the weights for the mlp from with the weight changes
+     * Function to update the weights/biases for the mlp from with the weight/bias changes
+     *
+     * @param nSamples number of samples on which weight/bias changes are accumulated
      */
-    private void updateWeights() {
+    private void updateWeights(int nSamples) {
         //Update weights in lower layer
         for (int i = 0; i < this.ni; i++) {
             for (int j = 0; j < this.nh; j++) {
                 //A positive sign is used because while calculating the delta we left out the minus sign there. So that
                 //minus sign cancels the minus sign here.
                 this.w1[i][j] += this.learningRate * this.dw1[i][j];
+                this.w1[i][j] /= nSamples;
             }
         }
 
@@ -350,6 +353,7 @@ public class MultilayerPerceptron {
             //A positive sign is used because while calculating the delta we left out the minus sign there. So that
             //minus sign cancels the minus sign here.
             this.b1[i] += this.learningRate * this.db1[i];
+            this.b1[i] /= nSamples;
         }
 
         //Update weights in upper layer
@@ -358,6 +362,7 @@ public class MultilayerPerceptron {
                 //A positive sign is used because while calculating the delta we left out the minus sign there. So that
                 //minus sign cancels the minus sign here.
                 this.w2[i][j] += this.learningRate * this.dw2[i][j];
+                this.w2[i][j] /= nSamples;
             }
         }
 
@@ -366,6 +371,7 @@ public class MultilayerPerceptron {
             //A positive sign is used because while calculating the delta we left out the minus sign there. So that
             //minus sign cancels the minus sign here.
             this.b2[i] += this.learningRate * this.db2[i];
+            this.b2[i] /= nSamples;
         }
 
         //Reset the weight changes to zeroes.
@@ -385,23 +391,31 @@ public class MultilayerPerceptron {
         System.out.println("Epoch;Loss");
         for (int epoch = 0; epoch < this.epochs; epoch++) {
             //Start of an epoch
-            double error = 0;
+            double loss = 0;
+            //A counter to keep track of batches in mini-batch gradient descent
+            int nSamples = 0;
             //For each example
             for (int i = 0; i < x.length; i++) {
                 //Do a forward pass
                 this.forward(x[i]);
                 //Calculate the error
-                error += this.lossFn.calculate(this.o, y[i]);
+                loss += this.lossFn.calculate(this.o, y[i]);
                 //Calculate the weight updates using back-propagation
                 this.backward(y[i]);
+
+                nSamples++;
                 //Update the weights with the changes
-                //`i` is zero indexed therefore adding 1.
-                //Update the weights at the batch end and at the last index
-                if ((i + 1) % batchSize == 0 || i == x.length - 1) {
-                    updateWeights();
+                if (nSamples == this.batchSize) {
+                    updateWeights(nSamples);
+                    nSamples = 0;
                 }
             }
-            System.out.println(String.format("%s;%s", epoch, error));
+            //When the number of training samples are not exactly divided by the batch size then their will be residual
+            //samples in the last batch. Updating changes due to those.
+            if (nSamples != 0) {
+                updateWeights(nSamples);
+            }
+            System.out.println(String.format("%s;%s", epoch, loss / x.length));
         }
     }
 
@@ -456,6 +470,7 @@ public class MultilayerPerceptron {
         System.out.println("(Gradient Descent) Batch size: " + this.batchSize);
         System.out.println("Random seed: " + this.randomState);
 
+        System.out.println();
         System.out.println("***********************");
         System.out.println("Weights of lower layer");
         System.out.println("***********************");
@@ -468,8 +483,9 @@ public class MultilayerPerceptron {
             System.out.println();
         }
 
+        System.out.println();
         System.out.println("***********************");
-        System.out.println("weights of upper layer");
+        System.out.println("Weights of upper layer");
         System.out.println("***********************");
         System.out.println();
         for (int i = 0; i < nh; i++) {
