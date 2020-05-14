@@ -39,12 +39,77 @@ public class MultilayerPerceptron {
     private int batchSize; //Batch size for mini-batch gradient descent. If it is 1 then it is stochastic gradient
     // descent and if it is equal to size of the training data then it is batch gradient descent.
 
+    /**
+     * MLP for stochastic gradient descent (batch size = 1)
+     *
+     * @param ni             units in input layers
+     * @param nh             units in hidden layers
+     * @param no             units in output layers
+     * @param learningRate   learning rate for gradient descent
+     * @param epochs         number of epochs to run for training
+     * @param type           type of  activation for hidden layers
+     * @param classification true if it is a classification problem
+     * @param multiClass     true if it is a multi-class classification problem
+     */
+    public MultilayerPerceptron(int ni, int nh, int no, double learningRate, int epochs, ActivationType type,
+                                boolean classification, boolean multiClass) {
+        this(ni, nh, no, new Random().nextInt(Integer.MAX_VALUE), learningRate, epochs, type, classification,
+                multiClass, 1);
+    }
+
+    /**
+     * MLP for stochastic gradient descent (batch size = 1). We can pass a random state to make initial weight and bias
+     * initialization predictable.
+     *
+     * @param ni             units in input layers
+     * @param nh             units in hidden layers
+     * @param no             units in output layers
+     * @param randomState    seed for random initialization of weights and biases
+     * @param learningRate   learning rate for gradient descent
+     * @param epochs         number of epochs to run for training
+     * @param type           type of  activation for hidden layers
+     * @param classification true if it is a classification problem
+     * @param multiClass     true if it is a multi-class classification problem
+     */
     public MultilayerPerceptron(int ni, int nh, int no, int randomState, double learningRate, int epochs,
                                 ActivationType type, boolean classification, boolean multiClass) {
-        //Stochastic gradient descent
         this(ni, nh, no, randomState, learningRate, epochs, type, classification, multiClass, 1);
     }
 
+    /**
+     * MLP for mini-batch gradient descent.
+     *
+     * @param ni             units in input layers
+     * @param nh             units in hidden layers
+     * @param no             units in output layers
+     * @param learningRate   learning rate for gradient descent
+     * @param epochs         number of epochs to run for training
+     * @param type           type of  activation for hidden layers
+     * @param classification true if it is a classification problem
+     * @param multiClass     true if it is a multi-class classification problem
+     * @param batchSize      batch size of gradient descent
+     */
+    public MultilayerPerceptron(int ni, int nh, int no, double learningRate, int epochs, ActivationType type,
+                                boolean classification, boolean multiClass, int batchSize) {
+        this(ni, nh, no, new Random().nextInt(Integer.MAX_VALUE), learningRate, epochs, type, classification,
+                multiClass, batchSize);
+    }
+
+    /**
+     * MLP for mini-batch gradient descent.We can pass a random state to make initial weight and bias
+     * initialization predictable.
+     *
+     * @param ni             units in input layers
+     * @param nh             units in hidden layers
+     * @param no             units in output layers
+     * @param randomState    seed for random initialization of weights and biases
+     * @param learningRate   learning rate for gradient descent
+     * @param epochs         number of epochs to run for training
+     * @param type           type of  activation for hidden layers
+     * @param classification true if it is a classification problem
+     * @param multiClass     true if it is a multi-class classification problem
+     * @param batchSize      batch size of gradient descent
+     */
     public MultilayerPerceptron(int ni, int nh, int no, int randomState, double learningRate, int epochs,
                                 ActivationType type, boolean classification, boolean multiClass, int batchSize) {
         this.ni = ni;

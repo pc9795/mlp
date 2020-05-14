@@ -18,7 +18,7 @@ public class SinExperiment {
         int hiddenUnits = 5;
         double learningRate = 0.01;
         int epochs = 3000;
-        ActivationType type = ActivationType.LINEAR;
+        ActivationType type = ActivationType.RELU;
         //Input and output
         int upperLimit = 1;
         int lowerLimit = -1;
