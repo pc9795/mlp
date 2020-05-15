@@ -16,9 +16,9 @@ public interface ActivationFn {
     double[] squash(double[] x);
 
     /**
-     * Apply the derivative of the function to the input
+     * Apply the derivative of the function to the inputs
      *
-     * @param x input
+     * @param x inputs
      * @return value of the inputs after applying the derivative of the activation function
      */
     double[] squashDerivative(double[] x);

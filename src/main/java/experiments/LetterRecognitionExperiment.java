@@ -40,7 +40,7 @@ public class LetterRecognitionExperiment {
             String line = in.nextLine(); //Read a line
             String[] tokens = line.split(","); //Split the line by commas
 
-            //Validation
+            //Validation. +1 because of the target alphabet
             if (tokens.length != inputVectorSize + 1) {
                 throw new RuntimeException("Invalid input");
             }
@@ -108,6 +108,7 @@ public class LetterRecognitionExperiment {
      * @return ration of correct predictions to total predictions
      */
     private static double accuracyScore(double predicted[][], double target[][]) {
+        //The length of predicted output and target output must be same.
         if (target.length != predicted.length) {
             throw new MLPException(String.format("The length of target and predicted is not same: %s != %s",
                     target.length, predicted.length));
@@ -117,21 +118,36 @@ public class LetterRecognitionExperiment {
         for (int i = 0; i < target.length; i++) {
             correct += getAlphabet(target[i]) == getAlphabet(predicted[i]) ? 1 : 0;
         }
-        //Return the ration of the correctly predicted to total number of predictions
+
+        //Return the ratio of the correctly predicted to total number of predictions
         return correct / target.length;
     }
 
+    /**
+     * Print the predictions of the letter-recognition problem
+     *
+     * @param predicted predicted output
+     * @param output    actual output
+     */
     private static void prettyPrintPrediction(double[][] predicted, double[][] output) {
+        //THe length of predicted output and target output must be same
         if (output.length != predicted.length) {
             throw new MLPException(String.format("The length of output and predicted is not same: %s != %s",
                     output.length, predicted.length));
         }
+
         System.out.println("Output;Predicted");
         for (int i = 0; i < output.length; i++) {
             System.out.println(getAlphabet(output[i]) + ";" + getAlphabet(predicted[i]));
         }
     }
 
+    /**
+     * Get an alphabet from its softmax probabilities
+     *
+     * @param probabilities softmax probabilities
+     * @return alphabet represented by the position with maximum probability
+     */
     private static char getAlphabet(double[] probabilities) {
         int maxIndex = 0;
         for (int i = 0; i < probabilities.length; i++) {
@@ -139,6 +155,8 @@ public class LetterRecognitionExperiment {
                 maxIndex = i;
             }
         }
+
+        // 'A' is represented by 0, 'B' by 1 and ...
         return (char) ('A' + maxIndex);
     }
 }

@@ -21,8 +21,8 @@ public class MultilayerPerceptron {
     private int no; //Number of output units
     private ActivationFn hiddenActivationFn; //Activation function used in hidden layers
     private ActivationFn outputActivationFn; //Activation function used in output layers
-    private LossFn lossFn; // Function to calculate loss between actual output and output of the mlp
-    private int epochs; //Epoch to train the mlp
+    private LossFn lossFn; // Function to calculate loss between actual output and mlp predictions
+    private int epochs; //Epochs to train the mlp
     private double learningRate; //Learning rate for the weight updates
     private double w1[][]; //Weights of the lower layer
     private double w2[][]; //Weights of the upper layer
@@ -38,7 +38,6 @@ public class MultilayerPerceptron {
     private double h[]; //Contains value of hidden units
     private double o[]; //Contains value of the outputs
     private int randomState; //Random state to control the outcomes of mlp
-    //classification problem then there is no effect of this value.
     private int batchSize; //Batch size for mini-batch gradient descent. If it is 1 then it is stochastic gradient
     // descent and if it is equal to size of the training data then it is batch gradient descent.
 
@@ -439,6 +438,7 @@ public class MultilayerPerceptron {
      * @return loss
      */
     public double loss(double predicted[][], double[] target[]) {
+        //The length of predicted output and target output must be same.
         if (target.length != predicted.length) {
             throw new MLPException(String.format("The length of target and predicted is not same: %s != %s",
                     target.length, predicted.length));
@@ -452,7 +452,13 @@ public class MultilayerPerceptron {
         return loss / target.length;
     }
 
+    /**
+     * Print information about this MLP
+     *
+     * @param showWeights whether to show the weights
+     */
     public void printInfo(boolean showWeights) {
+        //Print the hyper-parameter
         System.out.println("***********************");
         System.out.println("Hyper parameters");
         System.out.println("***********************");
@@ -470,6 +476,7 @@ public class MultilayerPerceptron {
             return;
         }
 
+        //Print the weights in lower layer
         System.out.println();
         System.out.println("***********************");
         System.out.println("Weights of lower layer");
@@ -483,6 +490,7 @@ public class MultilayerPerceptron {
             System.out.println();
         }
 
+        //Print the weights in upper layer
         System.out.println();
         System.out.println("***********************");
         System.out.println("Weights of upper layer");

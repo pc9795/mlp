@@ -13,13 +13,16 @@ public class SoftmaxActivationFn implements ActivationFn {
     @Override
     public double[] squash(double[] input) {
         double[] output = new double[input.length];
+
         double sum = 0;
         for (double anInput : input) {
             sum += Math.exp(anInput);
         }
+
         for (int i = 0; i < input.length; i++) {
             output[i] = Math.exp(input[i]) / sum;
         }
+
         return output;
     }
 

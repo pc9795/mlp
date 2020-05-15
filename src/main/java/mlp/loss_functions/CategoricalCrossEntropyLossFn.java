@@ -10,14 +10,17 @@ import mlp.exceptions.MLPException;
 public class CategoricalCrossEntropyLossFn implements LossFn {
     @Override
     public double calculate(double[] predicted, double[] target) {
+        //The length of predicted output and target output must be same
         if (predicted.length != target.length) {
             throw new MLPException(String.format("The length of output and target vector is different. %s != %s",
                     predicted.length, target.length));
         }
+
         double loss = 0;
         for (int i = 0; i < target.length; i++) {
             loss += -(target[i] * Math.log(predicted[i]));
         }
+
         return loss;
     }
 }

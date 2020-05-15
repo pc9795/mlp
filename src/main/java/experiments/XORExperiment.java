@@ -64,7 +64,7 @@ public class XORExperiment {
      * @return ration of values correctly predicted.
      */
     private static double accuracyScore(double[][] predicted, double[][] target) {
-        //Check the lengths are same
+        //Check the lengths are same for predicted output and actual output
         if (target.length != predicted.length) {
             throw new MLPException(String.format("The length of target and predicted is not same: %s != %s",
                     target.length, predicted.length));
