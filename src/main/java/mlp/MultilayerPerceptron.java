@@ -7,7 +7,6 @@ import mlp.loss_functions.CategoricalCrossEntropyLossFn;
 import mlp.loss_functions.LossFn;
 import mlp.loss_functions.SquaredErrorLossFn;
 
-import java.util.Arrays;
 import java.util.Random;
 
 /**
@@ -389,7 +388,7 @@ public class MultilayerPerceptron {
      */
     public void fit(double x[][], double y[][]) {
         System.out.println("Epoch;Loss");
-        for (int epoch = 0; epoch < this.epochs; epoch++) {
+        for (int epoch = 1; epoch <= this.epochs; epoch++) {
             //Start of an epoch
             double loss = 0;
             //A counter to keep track of batches in mini-batch gradient descent
