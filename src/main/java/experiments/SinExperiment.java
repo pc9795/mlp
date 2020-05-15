@@ -16,9 +16,10 @@ public class SinExperiment {
         //Hyper parameters
         int randomStateMLP = 20;
         int hiddenUnits = 5;
-        double learningRate = 0.01;
-        int epochs = 3000;
-        ActivationType type = ActivationType.RELU;
+        double learningRate = 0.1;
+        int epochs = 500;
+        ActivationType type = ActivationType.TANH;
+
         //Input and output
         int upperLimit = 1;
         int lowerLimit = -1;
@@ -34,25 +35,34 @@ public class SinExperiment {
             //extensible if we want to increase the vector size but it is more readable.
             output[i][0] = Math.sin(input[i][0] - input[i][1] + input[i][2] - input[i][3]);
         }
+
         //Splitting the data into 150 training examples and 50 testing examples
         double splitSize = 0.75;
         Utils.TrainTestSplit trainTestSplit = Utils.trainTestSplit(input, output, splitSize);
-        //Multilayer perceptron object
+
+        //Multilayer perceptron object for regression problem
         MultilayerPerceptron mlp = new MultilayerPerceptron(input[0].length, hiddenUnits, output[0].length,
                 randomStateMLP, learningRate, epochs, type, false, false);
+
         //Training
         mlp.fit(trainTestSplit.trainInput, trainTestSplit.trainOutput);
-        //Prediction
+
+        //Print the predictions of the MLP
+        System.out.println();
         System.out.println("***********************");
-        System.out.println(String.format("Training loss:%1.8f", mlp.loss(mlp.predict(trainTestSplit.trainInput),
-                trainTestSplit.trainOutput)));
-        System.out.println("***********************");
-        System.out.println("Test set predictions");
         double predicted[][] = mlp.predict(trainTestSplit.testInput);
         Utils.prettyPrintPrediction(predicted, trainTestSplit.testOutput);
         System.out.println("***********************");
-        System.out.println(String.format("Testing loss:%1.8f", mlp.loss(predicted, trainTestSplit.testOutput)));
+        System.out.println();
+
+        //Loss on training and test set.
         System.out.println("***********************");
+        System.out.println("Training loss: " + mlp.loss(mlp.predict(trainTestSplit.trainInput), trainTestSplit.trainOutput));
+        System.out.println("Testing loss: " + mlp.loss(predicted, trainTestSplit.testOutput));
+        System.out.println("***********************");
+        System.out.println();
+
+        //MLP info
         mlp.printInfo();
     }
 
@@ -70,11 +80,14 @@ public class SinExperiment {
                                                     int upperLimit) {
         double[][] vectors = new double[count][vectorSize];
         Random random = new Random(randomState);
+
         for (int i = 0; i < count; i++) {
             for (int j = 0; j < vectorSize; j++) {
+                //Generate a random value in the range of (lowerLimit, upperLimit)
                 vectors[i][j] = (random.nextDouble() * (upperLimit - lowerLimit)) + lowerLimit;
             }
         }
+
         return vectors;
     }
 }
