@@ -63,7 +63,7 @@ public class SinExperiment {
         System.out.println();
 
         //MLP info
-        mlp.printInfo();
+        mlp.printInfo(true);
     }
 
     /**

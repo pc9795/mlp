@@ -52,7 +52,7 @@ public class XORExperiment {
 
         //MLP info
         System.out.println();
-        mlp.printInfo();
+        mlp.printInfo(true);
     }
 
     /**

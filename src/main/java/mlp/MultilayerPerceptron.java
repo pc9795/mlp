@@ -342,8 +342,7 @@ public class MultilayerPerceptron {
             for (int j = 0; j < this.nh; j++) {
                 //A positive sign is used because while calculating the delta we left out the minus sign there. So that
                 //minus sign cancels the minus sign here.
-                this.w1[i][j] += this.learningRate * this.dw1[i][j];
-                this.w1[i][j] /= nSamples;
+                this.w1[i][j] += this.learningRate * (this.dw1[i][j] / nSamples);
             }
         }
 
@@ -351,8 +350,7 @@ public class MultilayerPerceptron {
         for (int i = 0; i < this.nh; i++) {
             //A positive sign is used because while calculating the delta we left out the minus sign there. So that
             //minus sign cancels the minus sign here.
-            this.b1[i] += this.learningRate * this.db1[i];
-            this.b1[i] /= nSamples;
+            this.b1[i] += this.learningRate * (this.db1[i] / nSamples);
         }
 
         //Update weights in upper layer
@@ -360,8 +358,7 @@ public class MultilayerPerceptron {
             for (int j = 0; j < this.no; j++) {
                 //A positive sign is used because while calculating the delta we left out the minus sign there. So that
                 //minus sign cancels the minus sign here.
-                this.w2[i][j] += this.learningRate * this.dw2[i][j];
-                this.w2[i][j] /= nSamples;
+                this.w2[i][j] += this.learningRate * (this.dw2[i][j] / nSamples);
             }
         }
 
@@ -369,8 +366,7 @@ public class MultilayerPerceptron {
         for (int i = 0; i < this.no; i++) {
             //A positive sign is used because while calculating the delta we left out the minus sign there. So that
             //minus sign cancels the minus sign here.
-            this.b2[i] += this.learningRate * this.db2[i];
-            this.b2[i] /= nSamples;
+            this.b2[i] += this.learningRate * (this.db2[i] / nSamples);
         }
 
         //Reset the weight changes to zeroes.
@@ -456,7 +452,7 @@ public class MultilayerPerceptron {
         return loss / target.length;
     }
 
-    public void printInfo() {
+    public void printInfo(boolean showWeights) {
         System.out.println("***********************");
         System.out.println("Hyper parameters");
         System.out.println("***********************");
@@ -468,6 +464,11 @@ public class MultilayerPerceptron {
         System.out.println("Learning rate: " + this.learningRate);
         System.out.println("(Gradient Descent) Batch size: " + this.batchSize);
         System.out.println("Random seed: " + this.randomState);
+
+        //If not want to print weights of the MLP
+        if (!showWeights) {
+            return;
+        }
 
         System.out.println();
         System.out.println("***********************");
