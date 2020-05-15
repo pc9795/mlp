@@ -8,17 +8,35 @@ everything inside `src/main/test/java` directory.
 
 ### Project Structure
 
-* `experiments`
-* `experiments.utils`
-* `mlp`
-* `mlp.activations`
-* `mlp.exceptions`
-* `mlp.loss_functions`
-
+* `experiments` - All the code for the experiments ran. XOR, Sin and Letter recognition
+* `experiments.utils` - Utility methods which are used in evaluating the experiments
+* `mlp` - All the code for Multi layer perceptron implementation
+* `mlp.activations` - All the activation functions which can be used - RELU, Leaky RELU, Sigmoid, Linear, Tanh, Softmax
+* `mlp.exceptions` - Custom exceptions for this project
+* `mlp.loss_functions` - All the loss function which can be used - Squared loss, Cross entropy, Binary cross entropy
 
 Sample Training and testing Example
 ```
+    int ni = ...
+    int nh = ...
+    int no = ...
+    int randomState = ...
+    double learningRate = ...
+    int epochs = ...
+    ActivationType type = ...
+    boolean isClassification = ...
+    boolean isMulticlass = ...
+    int batchSize = ...
+    
+    //Create an multi layer perceptron object
+    MultilayerPerceptron mlp = new MultilayerPerceptron(ni, nh, no, randomState, learningRate, epochs, type, 
+        isClassification, isMulticlass, bathcSize);
 
+    //Training the MLP
+    mlp.fit(input, output);
+
+    //Get the predictions of the MLP
+    double predicted[][] = mlp.predict(input);
 ```
 
 Ample amount of documentation is present in the code. If still something is not working or in case  of any doubts please
